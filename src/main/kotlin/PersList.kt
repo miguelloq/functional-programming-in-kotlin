@@ -9,7 +9,7 @@ sealed interface PersList<out T>{ // Abreviation for Persistant Single Linked Li
             tailrec fun <T> loop(s:String="",xs:PersList<T>):String = when(xs){
                 is Nil -> s
                 is Cons -> if(xs.tail is Nil) loop("$s${xs.head}",xs.tail)
-                            else loop("$s${xs.head},",xs.tail)
+                else loop("$s${xs.head},",xs.tail)
             }
             return loop("",this)
         }
@@ -107,15 +107,76 @@ fun ex37():Unit = PersList
     .let{println(it)}
 
 fun <T> PersList.Companion.empty():PersList<T> = Nil
+fun <A,B> PersList<A>.empty():PersList<B> = Nil
 
 //Ex 3.8
-fun <T> PersList<T>.length():Int = foldRight(0){ _, acc-> acc + 1}
+fun <T> PersList<T>.length():Int = foldRight(0){_, acc-> acc + 1}
+
+//Ex 3.9
+tailrec fun <A,B> PersList<A>.foldLeft(initial:B,f:(A,B)->B):B = when(this){
+    is Nil -> initial
+    is Cons -> tail.foldLeft(f(head,initial),f)
+}
+
+//Ex 3.10
+fun PersList<Double>.sumFold():Double = foldLeft(0.0){ head,acc -> head+acc }
+fun PersList<Double>.productFold():Double = foldLeft(1.0){ head,acc -> head*acc }
+
+//Ex 3.11
+fun <T> PersList<T>.reverse():PersList<T> = foldLeft(empty()){head,acc -> Cons(head,acc)}
+
+//Ex 3.12 and 3.13 i dont unserstand
+
+//Ex 3.14
+fun <T> PersList<T>.concat(xs:PersList<T>):PersList<T> = when(this){//Not tailrec
+    is Nil -> xs
+    is Cons -> when(xs){
+        is Nil -> this
+        is Cons -> Cons(head,tail.concat(xs))
+    }
+}
+
+//Ex 3.15
+fun PersList<Int>.addOne():PersList<Int> = foldRight(empty()){head,acc -> Cons(head+1,acc)}
+
+//Ex 3.16
+fun PersList<Double>.string():PersList<String> = map{it.toString()}
+
+//Ex 3.17
+fun <A,B> PersList<A>.map(f:(A)->B):PersList<B> = foldRight(empty()){head,acc-> Cons(f(head),acc)}
+
+//Ex 3.18
+fun <T> PersList<T>.filter(f:(T)->Boolean):PersList<T> = foldRight(empty()){head,acc->
+    if(f(head)) Cons(head,acc) else acc
+}
+
+//Ex 3.19 and 3.20 using .map result in the same outputs
+//fun <A,B> PersList<A>.flatMap(f:(A)->PersList<B>):PersList<B> = foldRight(empty()){head,acc->
+//	Cons(f(head),acc)
+//}
+
+//Ex 3.21
+fun  PersList<Int>.zipInt(xs:PersList<Int>):PersList<Int> = when(this){
+    is Nil -> xs
+    is Cons -> when(xs){
+        is Nil -> this
+        is Cons -> Cons(head + xs.head,tail.zipInt(xs.tail))
+    }
+}
+//Ex 3.22
+fun <A>  PersList<A>.zip(xs:PersList<A>,f:(head:A,xsHead:A)->A):PersList<A> = when(this){
+    is Nil -> xs
+    is Cons -> when(xs){
+        is Nil -> this
+        is Cons -> Cons(f(head,xs.head),tail.zip(xs.tail,f))
+    }
+}
+
 
 fun main(){
     PersList
-        .of(1.0,2.0,3.0,0.0,4.0)
+        .of(1,2,3,9)
         .also(::println)
-        .length()
+        .zip(PersList.of(4,5,6)){x,y->x-y}
         .also(::println)
-        .also{ex37()}
 }
